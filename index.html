@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简 — 活得简单，思想简单，情绪简单</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- 导航栏 -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">简</a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link active" data-page="home">首页</a>
+        <a href="post.html" class="nav-link" data-page="post">文章</a>
+        <a href="write.html" class="nav-link" data-page="write">写文章</a>
+        <a href="#about" class="nav-link" data-page="about">关于</a>
+      </div>
+      <button class="nav-menu-btn" id="menuBtn" aria-label="菜单">
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 移动端菜单 -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="mobile-link active" data-page="home">首页</a>
+    <a href="post.html" class="mobile-link" data-page="post">文章</a>
+    <a href="write.html" class="mobile-link" data-page="write">写文章</a>
+    <a href="#about" class="mobile-link" data-page="about">关于</a>
+  </div>
+
+  <!-- 主内容 -->
+  <main class="main">
+
+    <!-- 首页 Hero -->
+    <section class="hero" id="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span class="hero-char">简</span>
+        </h1>
+        <p class="hero-subtitle">活得简单 · 思想简单 · 情绪简单</p>
+        <div class="hero-line"></div>
+        <p class="hero-desc">删繁就简，回归本真</p>
+      </div>
+      <div class="hero-scroll">
+        <span>向下探索</span>
+        <div class="scroll-arrow"></div>
+      </div>
+    </section>
+
+    <!-- 文章列表（动态加载） -->
+    <section class="posts-section" id="posts">
+      <div class="section-header">
+        <h2 class="section-title">最近文章</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="posts-grid" id="postsGrid">
+        <!-- 文章卡片由 JS 动态渲染 -->
+      </div>
+      <div class="posts-more" id="postsMore" style="display:none;">
+        <a href="post.html" class="btn-outline">查看更多文章</a>
+      </div>
+      <!-- 无文章时的提示 -->
+      <div class="posts-empty" id="postsEmpty" style="display:none;">
+        <p>还没有文章，<a href="write.html">开始写第一篇</a></p>
+      </div>
+    </section>
+
+    <!-- 关于 -->
+    <section class="about-section" id="about">
+      <div class="section-header">
+        <h2 class="section-title">关于</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="about-content">
+        <div class="about-text">
+          <p class="about-lead">大道至简。</p>
+          <p>
+            这是一个关于"简"的个人博客。在这里，我记录简单生活的点滴，
+            分享简单思想的感悟，表达简单情绪的真实。
+          </p>
+          <p>
+            我相信，当我们剥去生活中多余的装饰，
+            剩下的才是最珍贵的东西。
+          </p>
+          <p>
+            活得简单，是一种选择。<br>
+            思想简单，是一种智慧。<br>
+            情绪简单，是一种修养。
+          </p>
+        </div>
+        <div class="about-motto">
+          <span>「</span>
+          <p>万物之始，大道至简，衍化至繁。</p>
+          <span>」</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">简</div>
+      <p class="footer-copy">© 2026 简 · 活得简单，思想简单，情绪简单</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/storage.js"></script>
+  <script>
+    /**
+     * 首页文章列表动态渲染
+     * 从 localStorage 读取已发布文章并生成卡片
+     * @author 钱卫忠
+     */
+    (function () {
+      'use strict';
+
+      var postsGrid = document.getElementById('postsGrid');
+      var postsMore = document.getElementById('postsMore');
+      var postsEmpty = document.getElementById('postsEmpty');
+
+      /**
+       * 从 HTML 内容中提取纯文本摘要（前 100 字）
+       * @param {string} html - HTML 字符串
+       * @returns {string} 纯文本摘要
+       */
+      function extractExcerpt(html) {
+        var div = document.createElement('div');
+        div.innerHTML = html;
+        var text = div.textContent || div.innerText || '';
+        return text.trim().substring(0, 100) + (text.length > 100 ? '……' : '');
+      }
+
+      /**
+       * 渲染文章列表
+       */
+      function renderPosts() {
+        var posts = Storage.getPosts().filter(function (p) {
+          return p.status === 'published';
+        });
+
+        // 清空现有内容
+        postsGrid.innerHTML = '';
+
+        if (posts.length === 0) {
+          postsEmpty.style.display = 'block';
+          postsMore.style.display = 'none';
+          return;
+        }
+
+        postsEmpty.style.display = 'none';
+
+        // 只显示最近 6 篇
+        var displayPosts = posts.slice(0, 6);
+        if (posts.length > 6) {
+          postsMore.style.display = 'block';
+        }
+
+        displayPosts.forEach(function (post) {
+          var card = document.createElement('article');
+          card.className = 'post-card';
+          card.setAttribute('data-category', post.category || '其他');
+
+          var excerpt = post.subtitle || extractExcerpt(post.content || '');
+
+          card.innerHTML =
+            '<div class="post-card-inner">' +
+              '<time class="post-date">' + (post.date || '') + '</time>' +
+              '<h3 class="post-title">' +
+                '<a href="post.html?id=' + post.id + '">' + escapeHtml(post.title || '无标题') + '</a>' +
+              '</h3>' +
+              '<p class="post-excerpt">' + escapeHtml(excerpt) + '</p>' +
+              '<div class="post-meta">' +
+                '<span class="post-tag">' + escapeHtml(post.category || '其他') + '</span>' +
+                '<span class="post-read">· 阅读约 ' + (post.readTime || 1) + ' 分钟</span>' +
+              '</div>' +
+            '</div>';
+
+          postsGrid.appendChild(card);
+        });
+
+        // 重新初始化滚动动画
+        initScrollAnimations();
+      }
+
+      /**
+       * HTML 转义
+       * @param {string} str - 原始字符串
+       * @returns {string} 转义后的字符串
+       */
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      }
+
+      /**
+       * 重新初始化滚动动画（供 main.js 中的逻辑使用）
+       */
+      function initScrollAnimations() {
+        var cards = document.querySelectorAll('.post-card');
+        if (!('IntersectionObserver' in window)) {
+          cards.forEach(function (card) { card.classList.add('visible'); });
+          return;
+        }
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              var index = Array.prototype.indexOf.call(cards, entry.target);
+              entry.target.style.transitionDelay = (index * 0.1) + 's';
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        cards.forEach(function (card) { observer.observe(card); });
+      }
+
+      // 页面加载后渲染
+      renderPosts();
+    })();
+  </script>
+</body>
+</html>

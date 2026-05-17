@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>写文章 — 简</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/write.css">
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- 导航栏 -->
+  <nav class="nav scrolled" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">简</a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link" data-page="home">首页</a>
+        <a href="post.html" class="nav-link" data-page="post">文章</a>
+        <a href="write.html" class="nav-link active" data-page="write">写文章</a>
+        <a href="index.html#about" class="nav-link" data-page="about">关于</a>
+      </div>
+      <button class="nav-menu-btn" id="menuBtn" aria-label="菜单">
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 移动端菜单 -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="mobile-link" data-page="home">首页</a>
+    <a href="post.html" class="mobile-link" data-page="post">文章</a>
+    <a href="write.html" class="mobile-link active" data-page="write">写文章</a>
+    <a href="index.html#about" class="mobile-link" data-page="about">关于</a>
+  </div>
+
+  <!-- 主内容：编辑区域 -->
+  <main class="main">
+    <div class="editor-page">
+
+      <!-- 页面标题 -->
+      <header class="editor-header">
+        <h1 class="editor-header-title">写文章</h1>
+        <p class="editor-header-desc">静心书写，以简驭繁</p>
+      </header>
+
+      <!-- 编辑表单 -->
+      <div class="editor-form">
+
+        <!-- 封面图片上传 -->
+        <div class="cover-upload" id="coverUpload">
+          <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/gif,image/webp">
+          <div class="cover-upload-placeholder" id="coverPlaceholder">
+            <div class="cover-upload-icon">+</div>
+            <p class="cover-upload-text">点击上传封面图片</p>
+            <p class="cover-upload-hint">支持 JPG / PNG / GIF / WebP，最大 5MB</p>
+          </div>
+          <div class="cover-preview" id="coverPreview">
+            <img id="coverPreviewImg" src="" alt="封面预览">
+            <button class="cover-remove" id="coverRemove" title="移除封面">&times;</button>
+          </div>
+        </div>
+
+        <!-- 文章标题 -->
+        <input
+          type="text"
+          class="editor-input editor-title"
+          id="editorTitle"
+          placeholder="文章标题"
+          maxlength="100"
+          autocomplete="off"
+        >
+
+        <!-- 副标题 -->
+        <input
+          type="text"
+          class="editor-input editor-subtitle"
+          id="editorSubtitle"
+          placeholder="副标题（可选）"
+          maxlength="200"
+          autocomplete="off"
+        >
+
+        <!-- 分类选择 -->
+        <div>
+          <label class="editor-field-label" for="editorCategory">分类</label>
+          <select class="editor-select" id="editorCategory">
+            <option value="生活">生活</option>
+            <option value="思想">思想</option>
+            <option value="情绪">情绪</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+
+        <!-- 富文本编辑器 -->
+        <div class="editor-quill-wrapper">
+          <div id="quillEditor"></div>
+        </div>
+
+        <!-- 图片上传按钮（插入到编辑器） -->
+        <div class="editor-image-upload">
+          <button class="editor-image-btn" id="imageUploadBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            插入图片
+          </button>
+          <input type="file" id="imageFileInput" accept="image/jpeg,image/png,image/gif,image/webp">
+          <span class="editor-image-hint">图片将插入到编辑器光标位置，最大 10MB</span>
+        </div>
+
+        <!-- 文件附件上传区 -->
+        <div class="attachment-upload">
+          <div class="attachment-upload-header">
+            <span class="attachment-upload-title">附件</span>
+            <button class="attachment-add-btn" id="attachmentAddBtn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              添加附件
+            </button>
+            <input type="file" id="attachmentFileInput" multiple>
+          </div>
+          <ul class="attachment-list" id="attachmentList"></ul>
+          <p class="attachment-empty" id="attachmentEmpty">暂无附件</p>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="editor-actions">
+          <button class="btn-draft" id="draftBtn" type="button">保存草稿</button>
+          <button class="btn-publish" id="publishBtn" type="button">发布文章</button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">简</div>
+      <p class="footer-copy">&copy; 2026 简 &middot; 活得简单，思想简单，情绪简单</p>
+    </div>
+  </footer>
+
+  <!-- Toast 提示 -->
+  <div class="editor-toast" id="editorToast"></div>
+
+  <!-- 脚本引入 -->
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/editor.js"></script>
+</body>
+</html>

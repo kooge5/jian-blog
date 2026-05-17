@@ -1,0 +1,682 @@
+/* ============================================
+   简 — 写文章编辑页样式
+   主题：黑白素雅 · 禅意极简
+   作者：钱卫忠
+   ============================================ */
+
+/* ---------- 编辑器页面容器 ---------- */
+.editor-page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: calc(var(--space-2xl) + 4rem) var(--space-lg) var(--space-3xl);
+}
+
+/* ---------- 页面标题区 ---------- */
+.editor-header {
+  margin-bottom: var(--space-2xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.editor-header-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  margin-bottom: var(--space-sm);
+}
+
+.editor-header-desc {
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--color-text-light);
+}
+
+/* ---------- 表单区域 ---------- */
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* ---------- 封面图片上传区 ---------- */
+.cover-upload {
+  position: relative;
+  border: 1px dashed var(--color-border);
+  border-radius: 2px;
+  padding: var(--space-2xl);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--duration) var(--ease-out),
+              background var(--duration) var(--ease-out);
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-upload:hover {
+  border-color: var(--color-text-light);
+  background: var(--color-bg-alt);
+}
+
+.cover-upload.has-image {
+  padding: 0;
+  border-style: solid;
+  border-color: var(--color-border);
+}
+
+/* 上传占位提示 */
+.cover-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.cover-upload-icon {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--color-text-light);
+}
+
+.cover-upload-text {
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--color-text-light);
+}
+
+.cover-upload-hint {
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: var(--color-text-light);
+  opacity: 0.7;
+}
+
+/* 封面预览 */
+.cover-preview {
+  position: relative;
+  width: 100%;
+  display: none;
+}
+
+.cover-preview img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-preview.active {
+  display: block;
+}
+
+.cover-upload-placeholder.hidden {
+  display: none;
+}
+
+/* 封面删除按钮 */
+.cover-remove {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: 32px;
+  height: 32px;
+  background: rgba(250, 250, 248, 0.85);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--color-text-sub);
+  transition: all 0.3s ease;
+  opacity: 0;
+}
+
+.cover-upload:hover .cover-remove {
+  opacity: 1;
+}
+
+.cover-remove:hover {
+  background: var(--color-white);
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+/* 隐藏的文件输入 */
+.cover-upload input[type="file"] {
+  display: none;
+}
+
+/* ---------- 输入框通用样式 ---------- */
+.editor-input,
+.editor-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-md) 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--color-text);
+  letter-spacing: 0.02em;
+  outline: none;
+  transition: border-color var(--duration) var(--ease-out);
+}
+
+.editor-input:focus,
+.editor-textarea:focus {
+  border-bottom-color: var(--color-text);
+}
+
+.editor-input::placeholder,
+.editor-textarea::placeholder {
+  color: var(--color-text-light);
+  opacity: 0.6;
+}
+
+/* 标题输入框 */
+.editor-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+}
+
+/* 副标题输入框 */
+.editor-subtitle {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--color-text-sub);
+}
+
+/* ---------- 分类选择 ---------- */
+.editor-field-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--color-text-light);
+  margin-bottom: var(--space-sm);
+}
+
+.editor-select {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-md) 0;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--color-text);
+  letter-spacing: 0.05em;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a0a0a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+  transition: border-color var(--duration) var(--ease-out);
+}
+
+.editor-select:focus {
+  border-bottom-color: var(--color-text);
+}
+
+.editor-select option {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-white);
+}
+
+/* ---------- Quill 编辑器样式覆盖 ---------- */
+.editor-quill-wrapper {
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: border-color var(--duration) var(--ease-out);
+}
+
+.editor-quill-wrapper:focus-within {
+  border-color: var(--color-text);
+}
+
+/* Quill 工具栏样式覆盖 */
+.ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: var(--space-md);
+}
+
+.ql-toolbar.ql-snow .ql-formats:last-child {
+  margin-right: 0;
+}
+
+/* 工具栏按钮样式 */
+.ql-snow .ql-stroke {
+  stroke: var(--color-text-sub) !important;
+}
+
+.ql-snow .ql-fill {
+  fill: var(--color-text-sub) !important;
+}
+
+.ql-snow .ql-picker-label {
+  color: var(--color-text-sub) !important;
+}
+
+.ql-snow .ql-picker-options {
+  border: 1px solid var(--color-border) !important;
+  border-radius: 2px !important;
+  background: var(--color-white) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.ql-snow .ql-picker-item {
+  color: var(--color-text-sub) !important;
+}
+
+.ql-snow .ql-active .ql-stroke {
+  stroke: var(--color-text) !important;
+}
+
+.ql-snow .ql-active .ql-fill {
+  fill: var(--color-text) !important;
+}
+
+.ql-snow .ql-active {
+  color: var(--color-text) !important;
+}
+
+.ql-toolbar.ql-snow button:hover .ql-stroke,
+.ql-toolbar.ql-snow .ql-picker-label:hover .ql-stroke {
+  stroke: var(--color-text) !important;
+}
+
+.ql-toolbar.ql-snow button:hover .ql-fill,
+.ql-toolbar.ql-snow .ql-picker-label:hover .ql-fill {
+  fill: var(--color-text) !important;
+}
+
+/* Quill 编辑区域样式覆盖 */
+.ql-container.ql-snow {
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--color-text);
+  line-height: 2;
+  letter-spacing: 0.02em;
+}
+
+.ql-editor {
+  min-height: 320px;
+  padding: var(--space-lg) var(--space-lg);
+}
+
+.ql-editor.ql-blank::before {
+  font-style: normal;
+  color: var(--color-text-light);
+  opacity: 0.5;
+  font-weight: 300;
+}
+
+/* 编辑器内排版样式 */
+.ql-editor p {
+  margin-bottom: var(--space-md);
+}
+
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+
+.ql-editor h1 {
+  font-size: 1.5rem;
+}
+
+.ql-editor h2 {
+  font-size: 1.3rem;
+  margin-top: var(--space-xl);
+}
+
+.ql-editor h3 {
+  font-size: 1.1rem;
+  margin-top: var(--space-lg);
+}
+
+.ql-editor blockquote {
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--space-lg);
+  color: var(--color-text-sub);
+  font-style: normal;
+}
+
+.ql-editor a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  border-radius: 2px;
+  margin: var(--space-md) 0;
+}
+
+/* ---------- 图片上传按钮 ---------- */
+.editor-image-upload {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.editor-image-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.6rem 1.5rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--color-text-sub);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.editor-image-btn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.editor-image-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.editor-image-hint {
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: var(--color-text-light);
+  opacity: 0.7;
+}
+
+.editor-image-btn input[type="file"] {
+  display: none;
+}
+
+/* ---------- 文件附件上传区 ---------- */
+.attachment-upload {
+  border: 1px dashed var(--color-border);
+  border-radius: 2px;
+  padding: var(--space-lg);
+  transition: border-color var(--duration) var(--ease-out),
+              background var(--duration) var(--ease-out);
+}
+
+.attachment-upload:hover {
+  border-color: var(--color-text-light);
+  background: var(--color-bg-alt);
+}
+
+.attachment-upload-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.attachment-upload-title {
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--color-text-light);
+}
+
+.attachment-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--color-text-sub);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.attachment-add-btn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.attachment-add-btn input[type="file"] {
+  display: none;
+}
+
+/* 附件列表 */
+.attachment-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-alt);
+  border-radius: 2px;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-text-sub);
+  letter-spacing: 0.02em;
+}
+
+.attachment-item-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80%;
+}
+
+.attachment-item-name svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--color-text-light);
+}
+
+.attachment-item-size {
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  margin-left: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.attachment-item-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 2px;
+  transition: color 0.3s ease;
+  flex-shrink: 0;
+}
+
+.attachment-item-remove:hover {
+  color: var(--color-text);
+}
+
+/* 空附件提示 */
+.attachment-empty {
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--color-text-light);
+  opacity: 0.6;
+  text-align: center;
+  padding: var(--space-sm) 0;
+}
+
+/* ---------- 操作按钮区 ---------- */
+.editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+/* 草稿按钮 */
+.btn-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--color-text-sub);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.btn-draft:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* 发布按钮 */
+.btn-publish {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.75rem 2.5rem;
+  border: 1px solid var(--color-text);
+  background: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: var(--color-bg);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.btn-publish:hover {
+  opacity: 0.85;
+  color: var(--color-bg);
+}
+
+/* ---------- 提示消息（Toast） ---------- */
+.editor-toast {
+  position: fixed;
+  top: 5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  padding: 0.75rem 2rem;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 200;
+}
+
+.editor-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+  .editor-page {
+    padding: calc(var(--space-xl) + 4rem) var(--space-md) var(--space-2xl);
+  }
+
+  .editor-title {
+    font-size: 1.3rem;
+  }
+
+  .ql-editor {
+    min-height: 240px;
+    padding: var(--space-md);
+  }
+
+  .editor-actions {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .btn-draft,
+  .btn-publish {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cover-upload {
+    min-height: 140px;
+    padding: var(--space-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .editor-header-title {
+    font-size: 1.2rem;
+  }
+
+  .attachment-item-name {
+    max-width: 65%;
+  }
+}
