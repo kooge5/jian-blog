@@ -494,11 +494,28 @@
     publishBtn.textContent = '处理图片并发布中...';
     draftBtn.disabled = true;
 
-    var body = buildIssueBody(data);
     var labels = getLabels(data, 'published');
 
-    // 处理 Markdown 中的 base64 图片，上传到 GitHub 图床
-    GitHubStorage.processMarkdownImages(body).then(function (processedBody) {
+    // 先处理封面图片（如果有 base64）
+    var coverPromise = Promise.resolve(data.cover);
+    if (data.cover && data.cover.startsWith('data:image')) {
+      // 提取 base64 数据
+      var match = data.cover.match(/^data:image\/[^;]+;base64,(.+)$/);
+      if (match) {
+        coverPromise = GitHubStorage.uploadImage('cover.jpg', match[1]);
+      }
+    }
+
+    coverPromise.then(function (coverUrl) {
+      // 更新 data.cover 为上传后的 URL
+      data.cover = coverUrl || data.cover;
+
+      // 构建 body
+      var body = buildIssueBody(data);
+
+      // 处理 Markdown 中的 base64 图片，上传到 GitHub 图床
+      return GitHubStorage.processMarkdownImages(body);
+    }).then(function (processedBody) {
       // 检查处理后的 body 长度
       if (processedBody.length > 60000) {
         showToast('文章内容太长（包含图片），请减少图片数量或压缩图片');
