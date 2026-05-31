@@ -20,6 +20,7 @@
         <a href="index.html" class="nav-link active" data-page="home">首页</a>
         <a href="post.html" class="nav-link" data-page="post">文章</a>
         <a href="write.html" class="nav-link" data-page="write">写文章</a>
+        <a href="config.html" class="nav-link" data-page="config">配置</a>
         <a href="#about" class="nav-link" data-page="about">关于</a>
       </div>
       <button class="nav-menu-btn" id="menuBtn" aria-label="菜单">
@@ -34,6 +35,7 @@
     <a href="index.html" class="mobile-link active" data-page="home">首页</a>
     <a href="post.html" class="mobile-link" data-page="post">文章</a>
     <a href="write.html" class="mobile-link" data-page="write">写文章</a>
+    <a href="config.html" class="mobile-link" data-page="config">配置</a>
     <a href="#about" class="mobile-link" data-page="about">关于</a>
   </div>
 
@@ -61,6 +63,16 @@
       <div class="section-header">
         <h2 class="section-title">最近文章</h2>
         <div class="section-line"></div>
+      </div>
+      <!-- Token 未配置提示 -->
+      <div class="token-notice" id="tokenNotice" style="display:none;">
+        <p>尚未配置 GitHub Token，无法加载文章数据。</p>
+        <a href="config.html">前往配置</a>
+      </div>
+      <!-- API 错误提示 -->
+      <div class="posts-error" id="postsError" style="display:none;">
+        <p id="errorMessage">加载文章失败，请检查网络连接或 Token 配置。</p>
+        <a href="config.html">检查配置</a>
       </div>
       <div class="posts-grid" id="postsGrid">
         <!-- 文章卡片由 JS 动态渲染 -->
@@ -116,11 +128,11 @@
   </footer>
 
   <script src="js/main.js"></script>
-  <script src="js/storage.js"></script>
+  <script src="js/github-storage.js"></script>
   <script>
     /**
      * 首页文章列表动态渲染
-     * 从 localStorage 读取已发布文章并生成卡片
+     * 从 GitHub Issues API 读取已发布文章并生成卡片
      * @author 钱卫忠
      */
     (function () {
@@ -129,6 +141,9 @@
       var postsGrid = document.getElementById('postsGrid');
       var postsMore = document.getElementById('postsMore');
       var postsEmpty = document.getElementById('postsEmpty');
+      var tokenNotice = document.getElementById('tokenNotice');
+      var postsError = document.getElementById('postsError');
+      var errorMessage = document.getElementById('errorMessage');
 
       /**
        * 从 HTML 内容中提取纯文本摘要（前 100 字）
@@ -143,13 +158,21 @@
       }
 
       /**
-       * 渲染文章列表
+       * HTML 转义
+       * @param {string} str - 原始字符串
+       * @returns {string} 转义后的字符串
        */
-      function renderPosts() {
-        var posts = Storage.getPosts().filter(function (p) {
-          return p.status === 'published';
-        });
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      }
 
+      /**
+       * 渲染文章列表
+       * @param {Array} posts - 文章数组
+       */
+      function renderPosts(posts) {
         // 清空现有内容
         postsGrid.innerHTML = '';
 
@@ -195,14 +218,24 @@
       }
 
       /**
-       * HTML 转义
-       * @param {string} str - 原始字符串
-       * @returns {string} 转义后的字符串
+       * 显示错误信息
+       * @param {string} message - 错误消息
        */
-      function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
+      function showError(message) {
+        errorMessage.textContent = message || '加载文章失败，请检查网络连接或 Token 配置。';
+        postsError.style.display = 'block';
+        postsGrid.style.display = 'none';
+        postsMore.style.display = 'none';
+        postsEmpty.style.display = 'none';
+      }
+
+      /**
+       * 隐藏所有状态提示
+       */
+      function hideAllNotices() {
+        tokenNotice.style.display = 'none';
+        postsError.style.display = 'none';
+        postsGrid.style.display = 'grid';
       }
 
       /**
@@ -227,8 +260,46 @@
         cards.forEach(function (card) { observer.observe(card); });
       }
 
+      /**
+       * 加载文章列表
+       */
+      function loadPosts() {
+        // 检查 Token 是否配置
+        if (!GitHubStorage.isConfigured()) {
+          tokenNotice.style.display = 'block';
+          postsGrid.style.display = 'none';
+          postsMore.style.display = 'none';
+          postsEmpty.style.display = 'none';
+          return;
+        }
+
+        hideAllNotices();
+
+        // 从 GitHub Issues 获取文章
+        GitHubStorage.getPosts({ state: 'open' })
+          .then(function (issues) {
+            // 过滤已发布文章并转换格式
+            var posts = issues
+              .filter(function (issue) {
+                // 检查是否有"已发布"标签
+                return issue.labels && issue.labels.some(function (label) {
+                  return label.name === '已发布';
+                });
+              })
+              .map(function (issue) {
+                return GitHubStorage.issueToPost(issue);
+              });
+
+            renderPosts(posts);
+          })
+          .catch(function (error) {
+            console.error('加载文章失败:', error);
+            showError('加载文章失败：' + error.message);
+          });
+      }
+
       // 页面加载后渲染
-      renderPosts();
+      loadPosts();
     })();
   </script>
 </body>

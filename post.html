@@ -20,6 +20,7 @@
         <a href="index.html" class="nav-link" data-page="home">首页</a>
         <a href="post.html" class="nav-link active" data-page="post">文章</a>
         <a href="write.html" class="nav-link" data-page="write">写文章</a>
+        <a href="config.html" class="nav-link" data-page="config">配置</a>
         <a href="index.html#about" class="nav-link" data-page="about">关于</a>
       </div>
       <button class="nav-menu-btn" id="menuBtn" aria-label="菜单">
@@ -34,6 +35,7 @@
     <a href="index.html" class="mobile-link" data-page="home">首页</a>
     <a href="post.html" class="mobile-link active" data-page="post">文章</a>
     <a href="write.html" class="mobile-link" data-page="write">写文章</a>
+    <a href="config.html" class="mobile-link" data-page="config">配置</a>
     <a href="index.html#about" class="mobile-link" data-page="about">关于</a>
   </div>
 
@@ -42,6 +44,18 @@
 
     <!-- 文章详情视图（有 id 参数时显示） -->
     <article class="post-page" id="postDetail" style="display:none;">
+
+      <!-- Token 未配置提示 -->
+      <div class="token-notice" id="tokenNotice" style="display:none;">
+        <p>尚未配置 GitHub Token，无法加载文章数据。</p>
+        <a href="config.html">前往配置</a>
+      </div>
+
+      <!-- API 错误提示 -->
+      <div class="posts-error" id="postsError" style="display:none;">
+        <p id="errorMessage">加载文章失败，请检查网络连接或 Token 配置。</p>
+        <a href="config.html">检查配置</a>
+      </div>
 
       <!-- 封面图 -->
       <div class="post-cover" id="postCover" style="display:none;">
@@ -87,6 +101,16 @@
           <h2 class="section-title">所有文章</h2>
           <div class="section-line"></div>
         </div>
+        <!-- Token 未配置提示 -->
+        <div class="token-notice" id="listTokenNotice" style="display:none;">
+          <p>尚未配置 GitHub Token，无法加载文章数据。</p>
+          <a href="config.html">前往配置</a>
+        </div>
+        <!-- API 错误提示 -->
+        <div class="posts-error" id="listPostsError" style="display:none;">
+          <p id="listErrorMessage">加载文章失败，请检查网络连接或 Token 配置。</p>
+          <a href="config.html">检查配置</a>
+        </div>
         <div class="posts-grid" id="allPostsGrid">
           <!-- 由 JS 动态渲染 -->
         </div>
@@ -107,11 +131,12 @@
   </footer>
 
   <script src="js/main.js"></script>
-  <script src="js/storage.js"></script>
+  <script src="js/github-storage.js"></script>
   <script>
     /**
      * 文章详情页逻辑
      * 根据 URL 参数 ?id=xxx 动态加载文章，或展示文章列表
+     * 使用 GitHub Issues API 作为数据源
      * @author 钱卫忠
      */
     (function () {
@@ -120,6 +145,12 @@
       /* ---------- DOM 元素 ---------- */
       var postDetail = document.getElementById('postDetail');
       var postsListPage = document.getElementById('postsListPage');
+      var tokenNotice = document.getElementById('tokenNotice');
+      var postsError = document.getElementById('postsError');
+      var errorMessage = document.getElementById('errorMessage');
+      var listTokenNotice = document.getElementById('listTokenNotice');
+      var listPostsError = document.getElementById('listPostsError');
+      var listErrorMessage = document.getElementById('listErrorMessage');
       var postCover = document.getElementById('postCover');
       var postCoverImg = document.getElementById('postCoverImg');
       var postMeta = document.getElementById('postMeta');
@@ -134,6 +165,9 @@
       var nextPostLink = document.getElementById('nextPost');
       var allPostsGrid = document.getElementById('allPostsGrid');
       var allPostsEmpty = document.getElementById('allPostsEmpty');
+
+      // 当前文章列表（用于上下篇导航）
+      var currentPostsList = [];
 
       /**
        * 获取 URL 查询参数
@@ -157,91 +191,197 @@
       }
 
       /**
+       * 检查 Token 配置状态
+       * @returns {boolean} 是否已配置
+       */
+      function checkToken() {
+        if (!GitHubStorage.isConfigured()) {
+          return false;
+        }
+        return true;
+      }
+
+      /**
+       * 显示详情页错误
+       * @param {string} message - 错误消息
+       */
+      function showDetailError(message) {
+        errorMessage.textContent = message || '加载文章失败，请检查网络连接或 Token 配置。';
+        postsError.style.display = 'block';
+        tokenNotice.style.display = 'none';
+        // 隐藏文章内容元素
+        postCover.style.display = 'none';
+        document.querySelector('.post-page-header').style.display = 'none';
+        postBody.style.display = 'none';
+        document.getElementById('postActions').style.display = 'none';
+        document.getElementById('postNav').style.display = 'none';
+      }
+
+      /**
+       * 显示列表页错误
+       * @param {string} message - 错误消息
+       */
+      function showListError(message) {
+        listErrorMessage.textContent = message || '加载文章失败，请检查网络连接或 Token 配置。';
+        listPostsError.style.display = 'block';
+        listTokenNotice.style.display = 'none';
+        allPostsGrid.style.display = 'none';
+        allPostsEmpty.style.display = 'none';
+      }
+
+      /**
+       * 将 Markdown 内容转换为 HTML（简单实现）
+       * @param {string} markdown - Markdown 文本
+       * @returns {string} HTML
+       */
+      function markdownToHtml(markdown) {
+        if (!markdown) return '<p>暂无内容</p>';
+
+        var html = markdown;
+
+        // 处理标题
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+        // 处理粗体和斜体
+        html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // 处理引用
+        html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+        // 处理代码块
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // 处理链接
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // 处理图片
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;">');
+
+        // 处理无序列表
+        html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+        html = html.replace(/<\/ul>\s*<ul>/g, '');
+
+        // 处理有序列表
+        html = html.replace(/^\d+\. (.*$)/gim, '<li>$1</li>');
+
+        // 处理水平线
+        html = html.replace(/^---$/gim, '<hr>');
+
+        // 处理段落
+        html = html.replace(/\n\n/g, '</p><p>');
+        html = '<p>' + html + '</p>';
+
+        // 清理多余的段落标签
+        html = html.replace(/<p><\/p>/g, '');
+        html = html.replace(/<p>(<h[1-6]>.*?<\/h[1-6]>)<\/p>/g, '$1');
+        html = html.replace(/<p>(<blockquote>.*?<\/blockquote>)<\/p>/g, '$1');
+        html = html.replace(/<p>(<pre>.*?<\/pre>)<\/p>/g, '$1');
+        html = html.replace(/<p>(<ul>.*?<\/ul>)<\/p>/g, '$1');
+        html = html.replace(/<p><hr><\/p>/g, '<hr>');
+
+        return html;
+      }
+
+      /**
        * 显示文章详情
-       * @param {string} id - 文章 ID
+       * @param {string} id - 文章 ID（Issue 编号）
        */
       function showPostDetail(id) {
-        var post = Storage.getPostById(id);
-        if (!post) {
-          // 文章不存在，显示列表
-          showPostsList();
+        // 检查 Token
+        if (!checkToken()) {
+          postDetail.style.display = 'block';
+          postsListPage.style.display = 'none';
+          tokenNotice.style.display = 'block';
+          postsError.style.display = 'none';
+          // 隐藏文章内容元素
+          postCover.style.display = 'none';
+          document.querySelector('.post-page-header').style.display = 'none';
+          postBody.style.display = 'none';
+          document.getElementById('postActions').style.display = 'none';
+          document.getElementById('postNav').style.display = 'none';
           return;
         }
 
-        // 切换视图
-        postDetail.style.display = 'block';
-        postsListPage.style.display = 'none';
+        // 获取文章详情
+        GitHubStorage.getPostById(parseInt(id))
+          .then(function (issue) {
+            var post = GitHubStorage.issueToPost(issue);
 
-        // 设置页面标题
-        document.title = (post.title || '文章') + ' — 简';
+            // 切换视图
+            postDetail.style.display = 'block';
+            postsListPage.style.display = 'none';
+            tokenNotice.style.display = 'none';
+            postsError.style.display = 'none';
 
-        // 封面图
-        if (post.cover) {
-          postCoverImg.src = post.cover;
-          postCover.style.display = 'block';
-        } else {
-          postCover.style.display = 'none';
-        }
+            // 恢复显示文章内容元素
+            document.querySelector('.post-page-header').style.display = 'block';
+            postBody.style.display = 'block';
+            document.getElementById('postActions').style.display = 'flex';
+            document.getElementById('postNav').style.display = 'flex';
 
-        // 元信息
-        postMeta.innerHTML =
-          '<span>' + (post.date || '') + '</span>' +
-          '<span>&nbsp;·&nbsp;</span>' +
-          '<span>' + escapeHtml(post.category || '其他') + '</span>' +
-          '<span>&nbsp;·&nbsp;</span>' +
-          '<span>阅读约 ' + (post.readTime || 1) + ' 分钟</span>';
+            // 设置页面标题
+            document.title = (post.title || '文章') + ' — 简';
 
-        // 标题和副标题
-        postTitle.textContent = post.title || '无标题';
-        postSubtitle.textContent = post.subtitle || '';
-        postSubtitle.style.display = post.subtitle ? 'block' : 'none';
-
-        // 正文内容
-        postBody.innerHTML = post.content || '<p>暂无内容</p>';
-
-        // 附件列表
-        if (post.attachments && post.attachments.length > 0) {
-          postAttachments.style.display = 'block';
-          postAttachmentsList.innerHTML = '';
-          post.attachments.forEach(function (att) {
-            var attData = Storage.getAttachment(att.id);
-            var li = document.createElement('li');
-            li.className = 'post-attachment-item';
-            if (attData && attData.data) {
-              li.innerHTML =
-                '<a href="' + attData.data + '" download="' + escapeHtml(att.name) + '" class="post-attachment-link">' +
-                  '<span class="post-attachment-name">' + escapeHtml(att.name) + '</span>' +
-                  '<span class="post-attachment-size">' + Storage.formatFileSize(att.size) + '</span>' +
-                '</a>';
+            // 封面图（从正文中提取图片）
+            var imgMatch = post.content.match(/!\[.*?\]\((.*?)\)/);
+            if (imgMatch) {
+              postCoverImg.src = imgMatch[1];
+              postCover.style.display = 'block';
             } else {
-              li.innerHTML =
-                '<span class="post-attachment-name">' + escapeHtml(att.name) + '</span>' +
-                '<span class="post-attachment-size">' + Storage.formatFileSize(att.size) + '</span>';
+              postCover.style.display = 'none';
             }
-            postAttachmentsList.appendChild(li);
+
+            // 元信息
+            postMeta.innerHTML =
+              '<span>' + (post.date || '') + '</span>' +
+              '<span>&nbsp;·&nbsp;</span>' +
+              '<span>' + escapeHtml(post.category || '其他') + '</span>' +
+              '<span>&nbsp;·&nbsp;</span>' +
+              '<span>阅读约 ' + (post.readTime || 1) + ' 分钟</span>';
+
+            // 标题和副标题
+            postTitle.textContent = post.title || '无标题';
+            postSubtitle.textContent = post.subtitle || '';
+            postSubtitle.style.display = post.subtitle ? 'block' : 'none';
+
+            // 正文内容（Markdown 转 HTML）
+            postBody.innerHTML = markdownToHtml(post.content);
+
+            // 附件列表（GitHub Issues 不直接支持附件，此处保留接口）
+            postAttachments.style.display = 'none';
+
+            // 编辑和删除按钮
+            btnEditPost.style.display = 'inline-block';
+            btnEditPost.href = 'write.html?edit=' + post.id;
+            btnDeletePost.style.display = 'inline-block';
+
+            // 上下篇导航
+            setupPostNav(post.id);
+
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+          })
+          .catch(function (error) {
+            console.error('加载文章详情失败:', error);
+            postDetail.style.display = 'block';
+            postsListPage.style.display = 'none';
+            showDetailError('加载文章失败：' + error.message);
           });
-        } else {
-          postAttachments.style.display = 'none';
-        }
-
-        // 编辑和删除按钮
-        btnEditPost.style.display = 'inline-block';
-        btnEditPost.href = 'write.html?edit=' + post.id;
-        btnDeletePost.style.display = 'inline-block';
-
-        // 上下篇导航
-        setupPostNav(id);
-
-        // 滚动到顶部
-        window.scrollTo(0, 0);
       }
 
       /**
        * 设置上一篇/下一篇导航
-       * @param {string} currentId - 当前文章 ID
+       * @param {number} currentId - 当前文章 ID
        */
       function setupPostNav(currentId) {
-        var posts = Storage.getPosts().filter(function (p) {
+        // 过滤已发布文章
+        var posts = currentPostsList.filter(function (p) {
           return p.status === 'published';
         });
 
@@ -274,51 +414,78 @@
        * 显示文章列表
        */
       function showPostsList() {
-        postDetail.style.display = 'none';
-        postsListPage.style.display = 'block';
-
-        var posts = Storage.getPosts().filter(function (p) {
-          return p.status === 'published';
-        });
-
-        allPostsGrid.innerHTML = '';
-
-        if (posts.length === 0) {
-          allPostsEmpty.style.display = 'block';
+        // 检查 Token
+        if (!checkToken()) {
+          postsListPage.style.display = 'block';
+          postDetail.style.display = 'none';
+          listTokenNotice.style.display = 'block';
+          listPostsError.style.display = 'none';
+          allPostsGrid.style.display = 'none';
+          allPostsEmpty.style.display = 'none';
           return;
         }
 
-        allPostsEmpty.style.display = 'none';
+        postsListPage.style.display = 'block';
+        postDetail.style.display = 'none';
+        listTokenNotice.style.display = 'none';
+        listPostsError.style.display = 'none';
+        allPostsGrid.style.display = 'grid';
 
-        posts.forEach(function (post) {
-          var card = document.createElement('article');
-          card.className = 'post-card';
-          card.setAttribute('data-category', post.category || '其他');
+        // 从 GitHub Issues 获取文章
+        GitHubStorage.getPosts({ state: 'open' })
+          .then(function (issues) {
+            // 转换并保存文章列表
+            currentPostsList = issues.map(function (issue) {
+              return GitHubStorage.issueToPost(issue);
+            });
 
-          // 提取摘要
-          var div = document.createElement('div');
-          div.innerHTML = post.content || '';
-          var text = (div.textContent || '').trim();
-          var excerpt = post.subtitle || (text.substring(0, 100) + (text.length > 100 ? '……' : ''));
+            // 过滤已发布文章用于显示
+            var posts = currentPostsList.filter(function (p) {
+              return p.status === 'published';
+            });
 
-          card.innerHTML =
-            '<div class="post-card-inner">' +
-              '<time class="post-date">' + (post.date || '') + '</time>' +
-              '<h3 class="post-title">' +
-                '<a href="post.html?id=' + post.id + '">' + escapeHtml(post.title || '无标题') + '</a>' +
-              '</h3>' +
-              '<p class="post-excerpt">' + escapeHtml(excerpt) + '</p>' +
-              '<div class="post-meta">' +
-                '<span class="post-tag">' + escapeHtml(post.category || '其他') + '</span>' +
-                '<span class="post-read">· 阅读约 ' + (post.readTime || 1) + ' 分钟</span>' +
-              '</div>' +
-            '</div>';
+            allPostsGrid.innerHTML = '';
 
-          allPostsGrid.appendChild(card);
-        });
+            if (posts.length === 0) {
+              allPostsEmpty.style.display = 'block';
+              allPostsGrid.style.display = 'none';
+              return;
+            }
 
-        // 初始化滚动动画
-        initScrollAnimations();
+            allPostsEmpty.style.display = 'none';
+            allPostsGrid.style.display = 'grid';
+
+            posts.forEach(function (post) {
+              var card = document.createElement('article');
+              card.className = 'post-card';
+              card.setAttribute('data-category', post.category || '其他');
+
+              // 提取摘要
+              var excerpt = post.subtitle || post.excerpt;
+
+              card.innerHTML =
+                '<div class="post-card-inner">' +
+                  '<time class="post-date">' + (post.date || '') + '</time>' +
+                  '<h3 class="post-title">' +
+                    '<a href="post.html?id=' + post.id + '">' + escapeHtml(post.title || '无标题') + '</a>' +
+                  '</h3>' +
+                  '<p class="post-excerpt">' + escapeHtml(excerpt) + '</p>' +
+                  '<div class="post-meta">' +
+                    '<span class="post-tag">' + escapeHtml(post.category || '其他') + '</span>' +
+                    '<span class="post-read">· 阅读约 ' + (post.readTime || 1) + ' 分钟</span>' +
+                  '</div>' +
+                '</div>';
+
+              allPostsGrid.appendChild(card);
+            });
+
+            // 初始化滚动动画
+            initScrollAnimations();
+          })
+          .catch(function (error) {
+            console.error('加载文章列表失败:', error);
+            showListError('加载文章失败：' + error.message);
+          });
       }
 
       /**
@@ -352,10 +519,21 @@
         var id = getUrlParam('id');
         if (!id) return;
 
+        if (!GitHubStorage.isConfigured()) {
+          alert('请先配置 GitHub Token');
+          return;
+        }
+
         if (confirm('确定要删除这篇文章吗？删除后不可恢复。')) {
-          Storage.deleteArticle(id);
-          // 跳转回文章列表
-          window.location.href = 'post.html';
+          GitHubStorage.deletePost(parseInt(id))
+            .then(function () {
+              // 跳转回文章列表
+              window.location.href = 'post.html';
+            })
+            .catch(function (error) {
+              console.error('删除文章失败:', error);
+              alert('删除失败：' + error.message);
+            });
         }
       });
 

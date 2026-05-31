@@ -773,6 +773,79 @@ img {
   opacity: 1;
 }
 
+/* API 错误提示 */
+.posts-error {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  margin: var(--space-xl) 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.posts-error p {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--color-text-sub);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-md);
+}
+
+.posts-error a {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--color-border);
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text-sub);
+  transition: all var(--duration) var(--ease-out);
+}
+
+.posts-error a:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+  opacity: 1;
+}
+
+/* Token 未配置提示 */
+.token-notice {
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg);
+  margin: var(--space-lg) 0;
+  border: 1px dashed var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.token-notice p {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--color-text-sub);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-md);
+}
+
+.token-notice a {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--color-text);
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: var(--color-text);
+  background: transparent;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.token-notice a:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+  opacity: 1;
+}
+
+/* 编辑器页面的 Token 提示 */
+.editor-token-notice {
+  max-width: 600px;
+  margin: var(--space-xl) auto;
+}
+
 /* ---------- 动画关键帧 ---------- */
 @keyframes fadeInUp {
   from {
