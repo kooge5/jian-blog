@@ -70,7 +70,12 @@ var GitHubStorage = (function () {
     return fetch(url, options).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.message || 'API 请求失败: ' + response.status);
+          console.error('GitHub API 错误详情:', err);
+          var errorMsg = err.message || 'API 请求失败: ' + response.status;
+          if (err.errors && err.errors.length > 0) {
+            errorMsg += ' - ' + err.errors.map(function(e) { return e.field + ': ' + e.message; }).join(', ');
+          }
+          throw new Error(errorMsg);
         });
       }
       return response.json();
