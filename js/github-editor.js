@@ -497,6 +497,15 @@
     var body = buildIssueBody(data);
     var labels = getLabels(data, 'published');
 
+    // 调试输出
+    console.log('发布文章数据:', {
+      title: data.title,
+      body: body,
+      labels: labels,
+      bodyLength: body ? body.length : 0,
+      bodyEmpty: !body || body.trim() === ''
+    });
+
     // 如果有编辑 ID，则更新；否则创建
     var promise;
     if (currentEditId) {
