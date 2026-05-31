@@ -265,6 +265,94 @@ var GitHubStorage = (function () {
     return !!getToken();
   }
 
+  /**
+   * 上传图片到 GitHub 图床
+   * 使用 GitHub Contents API 上传图片到仓库的 assets 目录
+   * @param {string} filename - 文件名
+   * @param {string} base64Data - base64 编码的图片数据（不含 data:image 前缀）
+   * @returns {Promise<string>} 图片的 GitHub 访问 URL
+   */
+  function uploadImage(filename, base64Data) {
+    if (!getToken()) {
+      return Promise.reject(new Error('请先设置 GitHub Token'));
+    }
+
+    // 生成唯一文件名
+    var timestamp = Date.now();
+    var uniqueName = timestamp + '_' + filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+    var path = 'assets/images/' + uniqueName;
+
+    // 上传图片到仓库
+    return apiRequest('/contents/' + path, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: '上传图片: ' + filename,
+        content: base64Data
+      })
+    }).then(function (result) {
+      // 返回原始内容 URL（通过 jsDelivr CDN 加速）
+      if (result.content && result.content.download_url) {
+        // 转换为 jsDelivr CDN 链接，速度更快
+        return 'https://cdn.jsdelivr.net/gh/' + CONFIG.owner + '/' + CONFIG.repo + '@master/' + path;
+      }
+      throw new Error('上传成功但未获取到图片 URL');
+    });
+  }
+
+  /**
+   * 处理 Markdown 中的 base64 图片，上传到 GitHub 并替换为 URL
+   * @param {string} markdown - 原始 Markdown 内容
+   * @returns {Promise<string>} 处理后的 Markdown
+   */
+  function processMarkdownImages(markdown) {
+    return new Promise(function (resolve) {
+      // 匹配 base64 图片: ![alt](data:image/xxx;base64,xxxx)
+      var base64ImageRegex = /!\[([^\]]*)\]\(data:image\/([^;]+);base64,([^)]+)\)/g;
+      var matches = [];
+      var match;
+
+      while ((match = base64ImageRegex.exec(markdown)) !== null) {
+        matches.push({
+          full: match[0],
+          alt: match[1],
+          ext: match[2],
+          data: match[3]
+        });
+      }
+
+      if (matches.length === 0) {
+        resolve(markdown);
+        return;
+      }
+
+      // 逐个上传图片
+      var uploadPromises = matches.map(function (item) {
+        var filename = 'image.' + item.ext;
+        return uploadImage(filename, item.data).then(function (url) {
+          return {
+            original: item.full,
+            replacement: '![' + item.alt + '](' + url + ')'
+          };
+        }).catch(function (error) {
+          console.error('图片上传失败:', error);
+          // 上传失败时保留原始 base64
+          return {
+            original: item.full,
+            replacement: item.full
+          };
+        });
+      });
+
+      Promise.all(uploadPromises).then(function (results) {
+        var processedMarkdown = markdown;
+        results.forEach(function (result) {
+          processedMarkdown = processedMarkdown.replace(result.original, result.replacement);
+        });
+        resolve(processedMarkdown);
+      });
+    });
+  }
+
   /* ---------- 公开接口 ---------- */
   return {
     // Token 管理
@@ -279,6 +367,10 @@ var GitHubStorage = (function () {
     createPost: createPost,
     updatePost: updatePost,
     deletePost: deletePost,
+
+    // 图片处理
+    uploadImage: uploadImage,
+    processMarkdownImages: processMarkdownImages,
 
     // 工具方法
     issueToPost: issueToPost

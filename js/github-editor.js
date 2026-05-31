@@ -491,55 +491,58 @@
 
     isLoading = true;
     publishBtn.disabled = true;
-    publishBtn.textContent = '发布中...';
+    publishBtn.textContent = '处理图片并发布中...';
     draftBtn.disabled = true;
 
     var body = buildIssueBody(data);
     var labels = getLabels(data, 'published');
 
-    // 调试输出
-    console.log('发布文章数据:', {
-      title: data.title,
-      body: body,
-      labels: labels,
-      bodyLength: body ? body.length : 0,
-      bodyEmpty: !body || body.trim() === ''
-    });
-
-    // 如果有编辑 ID，则更新；否则创建
-    var promise;
-    if (currentEditId) {
-      promise = GitHubStorage.updatePost(parseInt(currentEditId), {
-        title: data.title,
-        body: body,
-        labels: labels
-      });
-    } else {
-      promise = GitHubStorage.createPost({
-        title: data.title,
-        body: body,
-        labels: labels
-      });
-    }
-
-    promise
-      .then(function (issue) {
-        showToast('文章发布成功');
-        // 清除本地草稿
-        localStorage.removeItem('jian_blog_draft');
-        // 延迟跳转到文章页
-        setTimeout(function () {
-          window.location.href = 'post.html?id=' + issue.number;
-        }, 1200);
-      })
-      .catch(function (error) {
-        console.error('发布文章失败:', error);
-        showToast('发布失败：' + error.message);
+    // 处理 Markdown 中的 base64 图片，上传到 GitHub 图床
+    GitHubStorage.processMarkdownImages(body).then(function (processedBody) {
+      // 检查处理后的 body 长度
+      if (processedBody.length > 60000) {
+        showToast('文章内容太长（包含图片），请减少图片数量或压缩图片');
         isLoading = false;
         publishBtn.disabled = false;
         publishBtn.textContent = '发布文章';
         draftBtn.disabled = false;
-      });
+        return;
+      }
+
+      // 如果有编辑 ID，则更新；否则创建
+      var promise;
+      if (currentEditId) {
+        promise = GitHubStorage.updatePost(parseInt(currentEditId), {
+          title: data.title,
+          body: processedBody,
+          labels: labels
+        });
+      } else {
+        promise = GitHubStorage.createPost({
+          title: data.title,
+          body: processedBody,
+          labels: labels
+        });
+      }
+
+      return promise;
+    }).then(function (issue) {
+      if (!issue) return; // 上面已经处理了错误
+      showToast('文章发布成功');
+      // 清除本地草稿
+      localStorage.removeItem('jian_blog_draft');
+      // 延迟跳转到文章页
+      setTimeout(function () {
+        window.location.href = 'post.html?id=' + issue.number;
+      }, 1200);
+    }).catch(function (error) {
+      console.error('发布文章失败:', error);
+      showToast('发布失败：' + error.message);
+      isLoading = false;
+      publishBtn.disabled = false;
+      publishBtn.textContent = '发布文章';
+      draftBtn.disabled = false;
+    });
   }
 
   /* ---------- 草稿恢复 ---------- */
