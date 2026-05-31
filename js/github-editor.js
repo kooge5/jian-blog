@@ -376,8 +376,9 @@
   function getLabels(data, status) {
     var labels = [];
 
-    // 添加分类标签
-    if (data.category) {
+    // 添加分类标签（必须是仓库中存在的标签）
+    var validCategories = ['生活', '思想', '情绪'];
+    if (data.category && validCategories.indexOf(data.category) !== -1) {
       labels.push(data.category);
     }
 
