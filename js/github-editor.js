@@ -364,6 +364,11 @@
     var markdownContent = htmlToMarkdown(data.content);
     body += markdownContent;
 
+    // 确保 body 不为空（GitHub API 要求）
+    if (!body || body.trim() === '') {
+      body = '（暂无内容）';
+    }
+
     return body;
   }
 
