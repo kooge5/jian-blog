@@ -126,13 +126,22 @@ var GitHubStorage = (function () {
       return Promise.reject(new Error('请先设置 GitHub Token'));
     }
 
+    var requestBody = {
+      title: post.title,
+      body: post.body,
+      labels: post.labels || []
+    };
+
+    console.log('GitHub API 请求:', {
+      url: '/issues',
+      method: 'POST',
+      body: requestBody,
+      bodyJSON: JSON.stringify(requestBody)
+    });
+
     return apiRequest('/issues', {
       method: 'POST',
-      body: JSON.stringify({
-        title: post.title,
-        body: post.body,
-        labels: post.labels || []
-      })
+      body: JSON.stringify(requestBody)
     });
   }
 
